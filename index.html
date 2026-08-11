@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mojang Anomaly Report Database</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  :root{
+    --sky-blue-top:#4d84c4;
+    --sky-blue-bot:#1c3f66;
+    --dirt:#5b3f26;
+    --dirt-dark:#402c1a;
+    --stone:#8f8f88;
+    --parchment:#eae5d6;
+    --parchment-dark:#dcd5bf;
+    --ink:#2b2620;
+    --link:#2a5c8a;
+    --link-visited:#5c3d8a;
+    --fake:#a4362b;
+    --real:#3d6b2c;
+    --sky:#9a7d1f;
+  }
+
+  *{box-sizing:border-box;}
+
+  body{
+    margin:0;
+    background:
+      repeating-linear-gradient(0deg, #7d7d76 0px, #7d7d76 2px, #757570 2px, #757570 4px),
+      repeating-linear-gradient(90deg, #7d7d76 0px, #7d7d76 2px, #757570 2px, #757570 4px);
+    background-blend-mode:multiply;
+    background-color:#828279;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    color:var(--ink);
+    font-size:13px;
+  }
+
+  a{color:var(--link);}
+  a:visited{color:var(--link-visited);}
+
+  .topbar{
+    background: linear-gradient(#2c2c2c,#111);
+    color:#ccc;
+    font-size:11px;
+    padding:4px 12px;
+    display:flex;
+    justify-content:space-between;
+    border-bottom:1px solid #000;
+  }
+  .topbar span.blink{
+    color:#e0c34a;
+    animation: blink 1.2s steps(1) infinite;
+  }
+  @keyframes blink{50%{opacity:0;}}
+
+  header.site-header{
+    background: linear-gradient(180deg, var(--sky-blue-top) 0%, var(--sky-blue-bot) 100%);
+    border-bottom:4px solid var(--dirt-dark);
+    box-shadow: 0 3px 0 #000 inset;
+  }
+  .header-inner{
+    max-width:900px;
+    margin:0 auto;
+    padding:18px 16px 10px;
+  }
+  .logo-row{ display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
+  .logo-block{
+    font-family: 'Courier New', monospace;
+    font-weight:bold;
+    font-size:30px;
+    letter-spacing:1px;
+    color:#fff;
+    text-shadow: 3px 3px 0 #1a2f4a, 0 0 12px rgba(0,0,0,0.4);
+  }
+  .logo-block .accent{ color:#ffce4d; }
+  .tagline{
+    font-size:11px;
+    color:#dce8f7;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    border-left:2px solid rgba(255,255,255,0.4);
+    padding-left:10px;
+  }
+  nav.mainnav{
+    margin-top:14px;
+    background: var(--dirt);
+    border:2px solid var(--dirt-dark);
+    border-bottom:3px solid #2b1c0f;
+  }
+  nav.mainnav ul{ list-style:none; display:flex; margin:0; padding:0; flex-wrap:wrap; }
+  nav.mainnav li{ border-right:1px solid rgba(0,0,0,0.3); }
+  nav.mainnav a{
+    display:block;
+    padding:9px 16px;
+    color:#f1e6d0;
+    text-decoration:none;
+    font-size:12px;
+    font-weight:bold;
+    letter-spacing:0.5px;
+    text-transform:uppercase;
+  }
+  nav.mainnav a:hover{ background: rgba(255,255,255,0.12); color:#fff; }
+  nav.mainnav li.active a{ background: var(--parchment); color:var(--dirt-dark); }
+
+  .wrap{ max-width:900px; margin:16px auto 40px; padding:0 16px; }
+
+  .panel{
+    background: var(--parchment);
+    border:2px solid #a89c78;
+    box-shadow: 0 2px 0 #7d7358, 0 4px 10px rgba(0,0,0,0.35);
+    margin-bottom:18px;
+  }
+  .panel-head{
+    background: linear-gradient(#6d5a3c,#4a3c26);
+    color:#f4ecd8;
+    padding:8px 14px;
+    font-weight:bold;
+    font-size:13px;
+    letter-spacing:0.5px;
+    border-bottom:2px solid #2b1c0f;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  .panel-head small{ font-weight:normal; color:#c9bb98; font-size:10px; }
+  .panel-body{ padding:14px; }
+
+  .intro-box p{ line-height:1.6; margin:0 0 10px; }
+  .status-row{ display:flex; gap:14px; flex-wrap:wrap; margin-top:10px; font-size:11px; }
+  .status-chip{ background:#fff; border:1px solid #b9ad8a; padding:4px 8px; border-radius:2px; }
+  .status-chip b{ color:var(--dirt-dark); }
+
+  .legend{ display:flex; gap:10px; flex-wrap:wrap; font-size:10.5px; margin-top:10px; }
+  .legend span{ padding:2px 7px; border-radius:2px; color:#fff; text-transform:uppercase; letter-spacing:0.5px; }
+  .legend .fake{ background:var(--fake); }
+  .legend .sky{ background:var(--sky); }
+  .legend .real{ background:var(--real); }
+
+  .feed-shell{
+    background:#fff;
+    border:2px solid #b9ad8a;
+    max-height:640px;
+    overflow-y:scroll;
+  }
+  .feed-shell::-webkit-scrollbar{ width:14px; }
+  .feed-shell::-webkit-scrollbar-track{ background:#d8d2bd; }
+  .feed-shell::-webkit-scrollbar-thumb{ background:#8a7c54; border:2px solid #d8d2bd; }
+
+  .post{
+    display:grid;
+    grid-template-columns: 92px 1fr;
+    gap:12px;
+    padding:14px 16px;
+    border-bottom:1px solid #ddd6bf;
+  }
+  .post:nth-child(even){ background:#f6f2e5; }
+  .post:target{ background:#fff2c2; }
+
+  .post-side{ text-align:center; }
+  .avatar{
+    width:64px; height:64px;
+    margin:0 auto 6px;
+    background: linear-gradient(135deg,#9db6c9,#5a7185);
+    border:2px solid #333;
+    position:relative;
+    overflow:hidden;
+  }
+  .avatar::after{ content:""; position:absolute; inset:14px 10px 22px 10px; background:#000; }
+  .avatar.staff{ background: linear-gradient(135deg,#e07b39,#a3491a); }
+  .avatar.staff::after{ background:#2a1608; }
+  .uname{ font-size:11px; font-weight:bold; color:#3a3226; word-break:break-word; }
+  .uname.staff-name{ color:#a3491a; }
+  .rank{ font-size:9px; color:#8a7c54; text-transform:uppercase; }
+
+  .post-main .post-header{
+    display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:6px; margin-bottom:6px;
+  }
+  .post-title{ font-weight:bold; font-size:13px; color:#2b2620; }
+  .post-date{ font-size:10.5px; color:#7a6f52; }
+
+  .post-tags{ margin-bottom:6px; }
+  .tag{
+    display:inline-block; font-size:9px; text-transform:uppercase; letter-spacing:0.5px;
+    padding:2px 6px; border-radius:2px; margin-right:4px; color:#fff;
+  }
+  .tag.fake{ background:var(--fake); }
+  .tag.sky{ background:var(--sky); }
+  .tag.real{ background:var(--real); }
+  .tag.dark{ background:#1a1a1a; }
+  .tag.priority{ background:#8a5a1a; }
+
+  .post-body p{ margin:0 0 8px; line-height:1.5; }
+  .post-body{ font-size:12.5px; color:#332c22; }
+
+  .quote-line{ border-left:3px solid var(--fake); padding-left:10px; color:#5a2620; font-style:italic; margin:8px 0; }
+
+  .reply{
+    margin-top:10px; margin-left:20px; padding:10px 12px;
+    background:#fdf2e4; border:1px dashed #c99a5c;
+    display:grid; grid-template-columns:44px 1fr; gap:10px;
+  }
+  .reply .avatar{ width:40px; height:40px; margin:0; }
+  .reply .avatar::after{ inset:8px 6px 14px 6px; }
+  .reply-body{ font-size:12px; }
+  .reply-body .uname{ margin-bottom:3px; }
+
+  .video-frame{
+    background:#000; border:3px solid #333; width:100%; max-width:340px; aspect-ratio:16/10; position:relative;
+  }
+  .video-frame video{ width:100%; height:100%; display:block; background:#000; }
+  .video-caption{ font-size:10px; color:#7a6f52; margin-top:4px; }
+  .morse{
+    font-family:'Courier New', monospace; background:#111; color:#7bdc7b;
+    padding:6px 8px; display:inline-block; font-size:11px; letter-spacing:2px; margin:6px 0;
+  }
+
+  .feed-footer-note{ font-size:10.5px; color:#7a6f52; text-align:center; padding:10px; background:var(--parchment-dark); }
+
+  .panel-body.pad0{ padding:0; }
+
+  footer.site-footer{
+    background: linear-gradient(#3a2c19,#1f1710);
+    color:#b8ac8c;
+    font-size:10.5px;
+    text-align:center;
+    padding:18px 10px;
+    border-top:4px solid var(--dirt-dark);
+  }
+  footer.site-footer .counter{
+    display:inline-block; background:#000; color:#5fdc5f;
+    font-family:'Courier New', monospace; padding:2px 8px; letter-spacing:2px; margin-top:6px; border:1px solid #333;
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span>MOJANG SUPPORT NETWORK &mdash; ANOMALY DIVISION (UNOFFICIAL MIRROR)</span>
+  <span class="blink">● TRACKING: NORTH-STAR RENDER FAULT</span>
+</div>
+
+<header class="site-header">
+  <div class="header-inner">
+    <div class="logo-row">
+      <div class="logo-block">MOJANG<span class="accent">.</span>ANOMALIES</div>
+      <div class="tagline">World Report &amp; Bug Archive</div>
+    </div>
+    <nav class="mainnav">
+      <ul>
+        <li class="active"><a href="#reports">Report Index</a></li>
+        <li><a href="#post-video">Featured Report</a></li>
+        <li><a href="#submit">Submit a Report</a></li>
+        <li><a href="#faq">FAQ</a></li>
+        <li><a href="#support">Support Section</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <div class="panel intro-box">
+    <div class="panel-head">Mojang Anomaly Report Website <small>index &middot; 47 threads</small></div>
+    <div class="panel-body">
+      <p>This archive collects user-submitted reports of rendering anomalies, world-generation bugs, and unexplained
+      phenomena occurring near the northern skybox boundary. Threads are unmoderated except where a Mojang staff
+      account has replied directly. Scroll the index below to browse reports, newest first.</p>
+      <div class="status-row">
+        <div class="status-chip">Status: <b>Open / Under Review</b></div>
+        <div class="status-chip">Reports filed: <b>47</b></div>
+        <div class="status-chip">Confirmed by Mojang: <b>0</b></div>
+        <div class="status-chip">Last activity: <b>2 days ago</b></div>
+      </div>
+      <div class="legend">
+        <span class="fake">Fake Report</span>
+        <span class="sky">Sky / Render</span>
+        <span class="real">Real Report</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" id="reports">
+    <div class="panel-head">Report Index <small>scroll to browse &middot; newest first</small></div>
+    <div class="panel-body pad0">
+      <div class="feed-shell">
+
+        <!-- ===================== FEATURED / VIDEO POST ===================== -->
+        <div class="post" id="post-video">
+          <div class="post-side">
+            <div class="avatar"></div>
+            <div class="uname">skylark_09</div>
+            <div class="rank">Member since 2011</div>
+          </div>
+          <div class="post-main">
+            <div class="post-header">
+              <div class="post-title">north star bugged me out</div>
+              <div class="post-date">Posted 2 days ago</div>
+            </div>
+            <div class="post-tags">
+              <span class="tag real">Real Report</span>
+            </div>
+            <div class="post-body">
+              <p>was messing around near spawn and looked north at that star everyone keeps posting about. screen
+              froze for a second and then the dimension loading screen appeared, the one that shows terrain
+              generating like when you first load into a brand new world. didn't make sense since I wasn't loading
+              into anything, I was just standing there.</p>
+
+              <p>when it finally cut in I wasn't back where I was standing. I was in a dark area, couldn't see much
+              past a few blocks in any direction. no idea how long the loading screen actually lasted, my clock
+              said almost fifteen minutes had passed but it didn't feel that long.</p>
+
+              <p>logged out right after because it freaked me out a bit. hasn't happened again since, but I haven't
+              tried looking at the star that long again either.</p>
+            </div>
+
+            <div class="reply">
+              <div class="avatar staff"></div>
+              <div class="reply-body">
+                <div class="uname staff-name">Mojang_Support_Erik <span class="rank">&middot; Staff</span></div>
+                <p>We get a lot of reports like this that turn out to be ordinary chunk loading lag. If you have
+                any footage or a screen recording of this happening, please attach it here so we can take a closer
+                look.</p>
+              </div>
+            </div>
+
+            <div class="reply">
+              <div class="avatar"></div>
+              <div class="reply-body">
+                <div class="uname">skylark_09</div>
+                <p>had a recording running in the background from earlier, didn't even realize it caught this until
+                I checked. here it is, didn't cut or edit anything.</p>
+
+                <div class="video-frame">
+                  <!-- Replace src below with your GitHub-hosted video path, e.g. "videos/report-final.mp4"
+                       if it lives in this same repo, or a raw.githubusercontent.com URL if hosted elsewhere. -->
+                  <video controls poster="assets/video-poster.png">
+                    <source src="videos/report-final.mp4" type="video/mp4">
+                    Your browser does not support embedded video. <a href="videos/report-final.mp4">Download the file directly</a>.
+                  </video>
+                </div>
+                <div class="video-caption">videos/report-final.mp4 &middot; 00:41</div>
+
+                <p>you can see the loading screen kick in right after I look north, then it cuts to the dark area.
+                there's a chain walkway leading to a door, and opening it puts you on a balcony looking out at a
+                huge blue sun. right after that the sky texture fails to load, just the default missing texture
+                pattern, then the screen says "Saving World" and it crashes.</p>
+              </div>
+            </div>
+
+            <div class="reply">
+              <div class="avatar staff"></div>
+              <div class="reply-body">
+                <div class="uname staff-name">Mojang_Support_Erik <span class="rank">&middot; Staff</span></div>
+                <p>Thanks for following up with footage. We're escalating this internally &mdash; please don't
+                delete the source file. In the meantime this doesn't match any known crash signature on our end.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===================== BUGGED END CITY ===================== -->
+        <div class="post">
+          <div class="post-side">
+            <div class="avatar"></div>
+            <div class="uname">end_walker22</div>
+            <div class="rank">Member since 2013</div>
+          </div>
+          <div class="post-main">
+            <div class="post-header">
+              <div class="post-title">end city generated wrong, spruce tower from bottom of world to top</div>
+              <div class="post-date">Posted 6 days ago</div>
+            </div>
+            <div class="post-tags">
+              <span class="tag real">Real Report</span>
+            </div>
+            <div class="post-body">
+              <p>found a bugged end city that has a full spruce wood structure running from bedrock all the way up
+              past the normal build limit. no idea how it generated, spruce doesn't even spawn near end cities
+              normally. screenshots attached in the original thread.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===================== OVERLOADING MEMORY / INFINITE LOADING ===================== -->
+        <div class="post">
+          <div class="post-side">
+            <div class="avatar"></div>
+            <div class="uname">pixel_hoarder</div>
+            <div class="rank">Member since 2012</div>
+          </div>
+          <div class="post-main">
+            <div class="post-header">
+              <div class="post-title">end portal sent me to an infinite loading screen</div>
+              <div class="post-date">Posted 9 days ago</div>
+            </div>
+            <div class="post-tags">
+              <span class="tag real">Real Report</span>
+            </div>
+            <div class="post-body">
+              <p>my memory usage was already maxed out before I even touched the portal. jumped through and it's
+              just been loading ever since, going on 20 minutes now. world file still shows as "in use" so I don't
+              want to force close.</p>
+            </div>
+            <div class="reply">
+              <div class="avatar staff"></div>
+              <div class="reply-body">
+                <div class="uname staff-name">Mojang_Support_Erik <span class="rank">&middot; Staff</span></div>
+                <p>This sounds like a memory allocation issue, not a bug in world generation. Please file this on
+                the official bug tracker instead of this forum so our engineers can pull your logs.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===================== STAR TOO LONG -> INFINITE LOADING ===================== -->
+        <div class="post">
+          <div class="post-side">
+            <div class="avatar"></div>
+            <div class="uname">northbound_j</div>
+            <div class="rank">Member since 2014</div>
+          </div>
+          <div class="post-main">
+            <div class="post-header">
+              <div class="post-title">stared at the north star too long, got stuck on a loading screen</div>
+              <div class="post-date">Posted September 21, 2013</div>
+            </div>
+            <div class="post-tags">
+              <span class="tag sky">Sky / Render</span>
+            </div>
+            <div class="post-body">
+              <p>if you keep the camera locked on that one star for more than like a minute the game pulls up a
+              loading screen out of nowhere. doesn't go away on its own, had to alt-f4. tried it three separate
+              sessions, happens every time.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===================== STAR GLITCHES SCREEN ===================== -->
+        <div class="post">
+          <div class="post-side">
+            <div class="avatar"></div>
+            <div class="uname">render_gremlin</div>
+            <div class="rank">Member since 2013</div>
+          </div>
+          <div class="post-main">
+            <div class="post-header">
+              <div class="post-title">that same star is glitching out my whole screen</div>
+              <div class="post-date">Posted May 6, 2013</div>
+            </div>
+            <div class="post-tags">
+              <span class="tag sky">Sky / Render</span>
+            </div>
+            <div class="post-body">
+              <p>not just visual noise, it's like the render distance for everything else drops to zero the longer
+              I look at it. takes up most of the screen with this weird flickering by the end. closed the game
+              before finding out what happens after.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===================== SKY BUGS OUT LOOKING NORTH ===================== -->
+        <div class="post">
+          <div class="post-side">
+            <div class="avatar"></div>
+            <div class="uname">cloudsurfer99</div>
+            <div class="rank">Member since 2012</div>
+          </div>
+          <div class="post-main">
+            <div class="post-header">
+              <div class="post-title">sky completely bugs out when facing north at a certain star</div>
+              <div class="post-date">Posted February 11, 2012</div>
+            </div>
+            <div class="post-tags">
+              <span class="tag sky">Sky / Render</span>
+            </div>
+            <div class="post-body">
+              <p>everyone keeps posting about this but wanted to add mine too. facing due north there's a single
+              star that sits still while the rest of the sky rotates like normal. if you center your camera on it
+              the sky texture starts tearing at the edges.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===================== BUG REPORT -> MOJANG REPLY ===================== -->
+        <div class="post">
+          <div class="post-side">
+            <div class="avatar"></div>
+            <div class="uname">crafter_lily</div>
+            <div class="rank">Member since 2013</div>
+          </div>
+          <div class="post-main">
+            <div class="post-header">
+              <div class="post-title">is this a known bug or am I losing it</div>
+              <div class="post-date">Posted 19 days ago</div>
+            </div>
+            <div class="post-tags">
+              <span class="tag fake">Fake Report</span>
+            </div>
+            <div class="post-body">
+              <p>title basically says it. chunks around my base keep unloading and reloading in a loop, nothing to
+              do with the sky stuff everyone else is posting.</p>
+            </div>
+            <div class="reply">
+              <div class="avatar staff"></div>
+              <div class="reply-body">
+                <div class="uname staff-name">Mojang_Support_Erik <span class="rank">&middot; Staff</span></div>
+                <p>This is unrelated to the anomaly threads above. Please submit this on the official bug report
+                website with your game version and a log file attached.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===================== BUG REPORT 2 -> MOJANG REPLY ===================== -->
+        <div class="post">
+          <div class="post-side">
+            <div class="avatar"></div>
+            <div class="uname">oldschool_ocelot</div>
+            <div class="rank">Member since 2011</div>
+          </div>
+          <div class="post-main">
+            <div class="post-header">
+              <div class="post-title">textures flipping upside down near spawn</div>
+              <div class="post-date">Posted 22 days ago</div>
+            </div>
+            <div class="post-tags">
+              <span class="tag fake">Fake Report</span>
+            </div>
+            <div class="post-body">
+              <p>probably not related to the star thing but figured I'd post it here since this forum gets more
+              traffic than the official one.</p>
+            </div>
+            <div class="reply">
+              <div class="avatar staff"></div>
+              <div class="reply-body">
+                <div class="uname staff-name">Mojang_Support_Erik <span class="rank">&middot; Staff</span></div>
+                <p>Please use the official bug report website for issues like this &mdash; this forum is being kept
+                open only to track the recurring sky/anomaly reports.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===================== HEROBRINE OLD ===================== -->
+        <div class="post">
+          <div class="post-side">
+            <div class="avatar"></div>
+            <div class="uname">notch_fan_88</div>
+            <div class="rank">Member since 2010</div>
+          </div>
+          <div class="post-main">
+            <div class="post-header">
+              <div class="post-title">saw herobrine again last night, screenshot inside</div>
+              <div class="post-date">Posted March 14, 2014</div>
+            </div>
+            <div class="post-tags">
+              <span class="tag fake">Fake Report</span>
+            </div>
+            <div class="post-body">
+              <p>was mining near a ravine and saw a player skin standing in the dark with no name tag. gone by the
+              time I turned back. classic herobrine stuff, know it's probably fake but wanted to log it anyway.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===================== HEROBRINE OLD 2 ===================== -->
+        <div class="post">
+          <div class="post-side">
+            <div class="avatar"></div>
+            <div class="uname">redstone_randy</div>
+            <div class="rank">Member since 2011</div>
+          </div>
+          <div class="post-main">
+            <div class="post-header">
+              <div class="post-title">herobrine removed from changelog again lol</div>
+              <div class="post-date">Posted August 2, 2012</div>
+            </div>
+            <div class="post-tags">
+              <span class="tag fake">Fake Report</span>
+            </div>
+            <div class="post-body">
+              <p>old joke at this point but posting for the archive. not a real anomaly, just leaving this here for
+              completeness since this thread seems to collect everything sky/anomaly related now.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===================== OTHER FAKE MYTHS ===================== -->
+        <div class="post">
+          <div class="post-side">
+            <div class="avatar"></div>
+            <div class="uname">myth_debunker</div>
+            <div class="rank">Member since 2012</div>
+          </div>
+          <div class="post-main">
+            <div class="post-header">
+              <div class="post-title">list of other fake minecraft "myths" people keep confusing with this</div>
+              <div class="post-date">Posted January 9, 2013</div>
+            </div>
+            <div class="post-tags">
+              <span class="tag fake">Fake Report</span>
+            </div>
+            <div class="post-body">
+              <p>seeing a lot of crossover with old myths in the replies to the star threads, so here's a quick
+              list so people stop mixing them up: the "Slenderman in the Enderman" reskin story, the "11th plane"
+              seed rumor, and the classic "sonic.exe world" copypasta. none of those are related to what's actually
+              being reported here.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===================== ANOTHER FAKE MYTH ===================== -->
+        <div class="post">
+          <div class="post-side">
+            <div class="avatar"></div>
+            <div class="uname">guest_2847</div>
+            <div class="rank">Unregistered</div>
+          </div>
+          <div class="post-main">
+            <div class="post-header">
+              <div class="post-title">my cousin said if you name a sign "z" the world deletes itself</div>
+              <div class="post-date">Posted November 30, 2012</div>
+            </div>
+            <div class="post-tags">
+              <span class="tag fake">Fake Report</span>
+            </div>
+            <div class="post-body">
+              <p>not sure if this belongs here but posting anyway, pretty sure this one's completely made up.</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+      <div class="feed-footer-note">&mdash; end of indexed reports &mdash; older threads archived and unavailable &mdash;</div>
+    </div>
+  </div>
+
+  <div class="panel" id="submit">
+    <div class="panel-head">Submit a Report</div>
+    <div class="panel-body">
+      <p style="margin:0 0 10px;">Encountered something similar? Reports are reviewed manually before being added to the index above.</p>
+      <p style="margin:0;"><a href="#">&raquo; Open report form (redirects to support section)</a></p>
+    </div>
+  </div>
+
+</div>
+
+<footer class="site-footer">
+  <div>Mojang Anomaly Report Website &mdash; unofficial community archive &middot; not affiliated with Mojang Studios</div>
+  <div>Visitors since archive launch:</div>
+  <span class="counter">004128</span>
+</footer>
+
+</body>
+</html>
