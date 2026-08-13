@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Mojang Anomaly Report Database</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  :root{
+    --sky-blue-top:#4d84c4;
+    --sky-blue-bot:#1c3f66;
+    --dirt:#5b3f26;
+    --dirt-dark:#402c1a;
+    --parchment:#eae5d6;
+    --parchment-dark:#dcd5bf;
+    --ink:#2b2620;
+    --link:#2a5c8a;
+    --link-visited:#5c3d8a;
+    --real:#3d6b2c;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      repeating-linear-gradient(0deg, #7d7d76 0px, #7d7d76 2px, #757570 2px, #757570 4px),
+      repeating-linear-gradient(90deg, #7d7d76 0px, #7d7d76 2px, #757570 2px, #757570 4px);
+    background-blend-mode:multiply;
+    background-color:#828279;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    color:var(--ink);
+    font-size:13px;
+  }
+  a{color:var(--link);}
+  a:visited{color:var(--link-visited);}
+  .topbar{
+    background: linear-gradient(#2c2c2c,#111);
+    color:#ccc;
+    font-size:11px;
+    padding:4px 12px;
+    display:flex;
+    justify-content:space-between;
+    border-bottom:1px solid #000;
+  }
+  header.site-header{
+    background: linear-gradient(180deg, var(--sky-blue-top) 0%, var(--sky-blue-bot) 100%);
+    border-bottom:4px solid var(--dirt-dark);
+    box-shadow: 0 3px 0 #000 inset;
+  }
+  .header-inner{
+    max-width:900px;
+    margin:0 auto;
+    padding:18px 16px 10px;
+  }
+  .logo-row{ display:flex; align-items:baseline; gap:10px; flex-wrap:wrap; }
+  .logo-block{
+    font-family: 'Courier New', monospace;
+    font-weight:bold;
+    font-size:30px;
+    letter-spacing:1px;
+    color:#fff;
+    text-shadow: 3px 3px 0 #1a2f4a, 0 0 12px rgba(0,0,0,0.4);
+  }
+  .logo-block .accent{ color:#ffce4d; }
+  .tagline{
+    font-size:11px;
+    color:#dce8f7;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    border-left:2px solid rgba(255,255,255,0.4);
+    padding-left:10px;
+  }
+  .wrap{ max-width:900px; margin:16px auto 40px; padding:0 16px; }
+  .panel{
+    background: var(--parchment);
+    border:2px solid #a89c78;
+    box-shadow: 0 2px 0 #7d7358, 0 4px 10px rgba(0,0,0,0.35);
+    margin-bottom:18px;
+  }
+  .panel-head{
+    background: linear-gradient(#6d5a3c,#4a3c26);
+    color:#f4ecd8;
+    padding:8px 14px;
+    font-weight:bold;
+    font-size:13px;
+    letter-spacing:0.5px;
+    border-bottom:2px solid #2b1c0f;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+  }
+  .panel-head small{ font-weight:normal; color:#c9bb98; font-size:10px; }
+  .panel-body{ padding:16px; }
+  .post{
+    display:grid;
+    grid-template-columns: 92px 1fr;
+    gap:14px;
+  }
+  .post-side{ text-align:center; }
+  .avatar{
+    width:64px; height:64px;
+    margin:0 auto 6px;
+    background: linear-gradient(135deg,#9db6c9,#5a7185);
+    border:2px solid #333;
+    position:relative;
+    overflow:hidden;
+  }
+  .avatar::after{ content:""; position:absolute; inset:14px 10px 22px 10px; background:#000; }
+  .uname{ font-size:11px; font-weight:bold; color:#3a3226; word-break:break-word; }
+  .rank{ font-size:9px; color:#8a7c54; text-transform:uppercase; }
+  .post-header{
+    display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:6px; margin-bottom:6px;
+  }
+  .post-title{ font-weight:bold; font-size:13px; color:#2b2620; }
+  .post-date{ font-size:10.5px; color:#7a6f52; }
+  .post-tags{ margin-bottom:8px; }
+  .tag{
+    display:inline-block; font-size:9px; text-transform:uppercase; letter-spacing:0.5px;
+    padding:2px 6px; border-radius:2px; margin-right:4px; color:#fff;
+  }
+  .tag.real{ background:var(--real); }
+  textarea{
+    width:100%;
+    min-height:180px;
+    resize:vertical;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    font-size:12.5px;
+    line-height:1.6;
+    color:#332c22;
+    background:#fff;
+    border:1px solid #b9ad8a;
+    padding:10px;
+  }
+  footer.site-footer{
+    background: linear-gradient(#3a2c19,#1f1710);
+    color:#b8ac8c;
+    font-size:10.5px;
+    text-align:center;
+    padding:18px 10px;
+    border-top:4px solid var(--dirt-dark);
+  }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <span>MOJANG SUPPORT NETWORK &mdash; ANOMALY DIVISION (UNOFFICIAL MIRROR)</span>
+</div>
+<header class="site-header">
+  <div class="header-inner">
+    <div class="logo-row">
+      <div class="logo-block">MOJANG<span class="accent">.</span>ANOMALIES</div>
+      <div class="tagline">World Report &amp; Bug Archive</div>
+    </div>
+  </div>
+</header>
+<div class="wrap">
+  <div class="panel">
+    <div class="panel-head">Report thread <small>not affiliated with Mojang</small></div>
+    <div class="panel-body">
+      <div class="post">
+        <div class="post-side">
+          <div class="avatar"></div>
+          <div class="uname">Mojang</div>
+          <div class="rank">Member since 2004</div>
+        </div>
+        <div class="post-main">
+          <div class="post-header">
+            <div class="post-title">Sky Mercer</div>
+            <div class="post-date">Posted at 2PM</div>
+          </div>
+          <div class="post-tags">
+            <span class="tag real">Real Report</span>
+          </div>
+          <textarea placeholder="Write your paragraph here...">Make her dissappearance covered. I want all of the information she put out gone. Redacted. If anyone else gets involved, take them too.</textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<footer class="site-footer">
+  <div>Mojang Anomaly Report Website &mdash; unofficial community archive &middot; not affiliated with Mojang Studios</div>
+</footer>
+</body>
+</html>
